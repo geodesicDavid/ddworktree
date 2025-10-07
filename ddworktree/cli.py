@@ -302,6 +302,144 @@ def main(args: Optional[List[str]] = None) -> int:
                 print("Error: source and destination must be specified", file=sys.stderr)
                 return 1
             return move_files(repo, source, destination, verbose_flag)
+        elif parsed_args.command == 'fetch':
+            from .commands.fetch import fetch_updates
+            # Parse fetch-specific args
+            all_flag = False
+            prune_flag = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--all':
+                    all_flag = True
+                    i += 1
+                elif command_args[i] == '--prune':
+                    prune_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    i += 1
+            return fetch_updates(repo, all_flag, prune_flag, verbose_flag)
+        elif parsed_args.command == 'pull':
+            from .commands.pull import pull_updates
+            # Parse pull-specific args
+            remote = None
+            branch = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    if remote is None:
+                        remote = command_args[i]
+                    elif branch is None:
+                        branch = command_args[i]
+                    else:
+                        print("Error: too many arguments", file=sys.stderr)
+                        return 1
+                    i += 1
+            return pull_updates(repo, remote, branch, verbose_flag)
+        elif parsed_args.command == 'push':
+            from .commands.push import push_commits
+            # Parse push-specific args
+            include_local_flag = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--include-local':
+                    include_local_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    i += 1
+            return push_commits(repo, include_local_flag, verbose_flag)
+        elif parsed_args.command == 'merge':
+            from .commands.merge import merge_branch
+            # Parse merge-specific args
+            branch = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    if branch is None:
+                        branch = command_args[i]
+                    else:
+                        print("Error: too many arguments", file=sys.stderr)
+                        return 1
+                    i += 1
+            if not branch:
+                print("Error: branch must be specified", file=sys.stderr)
+                return 1
+            return merge_branch(repo, branch, verbose_flag)
+        elif parsed_args.command == 'rebase':
+            from .commands.rebase import rebase_worktrees
+            # Parse rebase-specific args
+            branch = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    if branch is None:
+                        branch = command_args[i]
+                    else:
+                        print("Error: too many arguments", file=sys.stderr)
+                        return 1
+                    i += 1
+            if not branch:
+                print("Error: branch must be specified", file=sys.stderr)
+                return 1
+            return rebase_worktrees(repo, branch, verbose_flag)
+        elif parsed_args.command == 'cherry-pick':
+            from .commands.cherry_pick import cherry_pick_commit
+            # Parse cherry-pick-specific args
+            commit = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    if commit is None:
+                        commit = command_args[i]
+                    else:
+                        print("Error: too many arguments", file=sys.stderr)
+                        return 1
+                    i += 1
+            if not commit:
+                print("Error: commit must be specified", file=sys.stderr)
+                return 1
+            return cherry_pick_commit(repo, commit, verbose_flag)
         else:
             print(f"Command '{parsed_args.command}' not yet implemented")
             return 1
