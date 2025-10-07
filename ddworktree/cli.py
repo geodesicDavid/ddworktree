@@ -627,6 +627,111 @@ def main(args: Optional[List[str]] = None) -> int:
                 print("Error: tree must be specified", file=sys.stderr)
                 return 1
             return restore_worktree(repo, tree, from_pair, verbose_flag)
+        elif parsed_args.command == 'clone':
+            from .commands.clone import clone_with_worktrees
+            # Parse clone-specific args
+            url = None
+            directory = None
+            branch = None
+            no_local = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--branch':
+                    if i + 1 < len(command_args):
+                        branch = command_args[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+                elif command_args[i] == '--no-local':
+                    no_local = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    if url is None:
+                        url = command_args[i]
+                    elif directory is None:
+                        directory = command_args[i]
+                    else:
+                        print("Error: too many arguments", file=sys.stderr)
+                        return 1
+                    i += 1
+            if not url:
+                print("Error: repository URL must be specified", file=sys.stderr)
+                return 1
+            return clone_with_worktrees(repo, url, directory, branch, no_local, verbose_flag)
+        elif parsed_args.command == 'logs':
+            from .commands.logs import show_logs
+            # Parse logs-specific args
+            graph = False
+            since = None
+            until = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--graph':
+                    graph = True
+                    i += 1
+                elif command_args[i] == '--since':
+                    if i + 1 < len(command_args):
+                        since = command_args[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+                elif command_args[i] == '--until':
+                    if i + 1 < len(command_args):
+                        until = command_args[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    i += 1
+            return show_logs(repo, graph, since, until, verbose_flag)
+        elif parsed_args.command == 'config':
+            from .commands.config import manage_config
+            # Parse config-specific args
+            get_key = None
+            set_value = None
+            list_config = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--get':
+                    if i + 1 < len(command_args):
+                        get_key = command_args[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+                elif command_args[i] == '--set':
+                    if i + 2 < len(command_args):
+                        set_value = command_args[i + 1:i + 3]
+                        i += 3
+                    else:
+                        print("Error: --set requires KEY and VALUE", file=sys.stderr)
+                        return 1
+                elif command_args[i] == '--list':
+                    list_config = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    i += 1
+            return manage_config(repo, get_key, set_value, list_config, verbose_flag)
         else:
             print(f"Command '{parsed_args.command}' not yet implemented")
             return 1
