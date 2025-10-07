@@ -149,4 +149,9 @@ Thumbs.db
 *.log
 .dockerignore
 
+# ddworktree specific
+.ddconfig
+*.local
+*.secrets
+
 
