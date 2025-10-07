@@ -173,8 +173,135 @@ def main(args: Optional[List[str]] = None) -> int:
         repo = DDWorktreeRepo()
 
         # Dispatch to appropriate command handler
+        command_args = sys.argv[2:]  # Skip 'ddworktree'
         if parsed_args.command == 'worktree':
             return handle_worktree_command(repo, parsed_args)
+        elif parsed_args.command == 'add':
+            from .commands.add import add_files
+            # Parse add-specific args
+            add_files_list = []
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    add_files_list.append(command_args[i])
+                    i += 1
+            return add_files(repo, add_files_list if add_files_list else ['.'], verbose_flag)
+        elif parsed_args.command == 'commit':
+            from .commands.commit import commit_changes
+            # Parse commit-specific args
+            message = None
+            amend_flag = False
+            split_flag = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '-m':
+                    if i + 1 < len(command_args):
+                        message = command_args[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+                elif command_args[i] == '--amend':
+                    amend_flag = True
+                    i += 1
+                elif command_args[i] == '--split':
+                    split_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    i += 1
+            if not message:
+                print("Error: commit message is required (use -m \"message\")", file=sys.stderr)
+                return 1
+            return commit_changes(repo, message, amend_flag, split_flag, verbose_flag)
+        elif parsed_args.command == 'reset':
+            from .commands.reset import reset_worktrees
+            # Parse reset-specific args
+            commitish = None
+            hard_flag = False
+            soft_flag = False
+            keep_local_flag = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--hard':
+                    hard_flag = True
+                    i += 1
+                elif command_args[i] == '--soft':
+                    soft_flag = True
+                    i += 1
+                elif command_args[i] == '--keep-local':
+                    keep_local_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    commitish = command_args[i]
+                    i += 1
+            return reset_worktrees(repo, commitish, hard_flag, soft_flag, keep_local_flag, verbose_flag)
+        elif parsed_args.command == 'rm':
+            from .commands.rm import remove_files
+            # Parse rm-specific args
+            files_list = []
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    files_list.append(command_args[i])
+                    i += 1
+            if not files_list:
+                print("Error: at least one file must be specified", file=sys.stderr)
+                return 1
+            return remove_files(repo, files_list, verbose_flag)
+        elif parsed_args.command == 'mv':
+            from .commands.mv import move_files
+            # Parse mv-specific args
+            source = None
+            destination = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    if source is None:
+                        source = command_args[i]
+                    elif destination is None:
+                        destination = command_args[i]
+                    else:
+                        print("Error: too many arguments", file=sys.stderr)
+                        return 1
+                    i += 1
+            if not source or not destination:
+                print("Error: source and destination must be specified", file=sys.stderr)
+                return 1
+            return move_files(repo, source, destination, verbose_flag)
         else:
             print(f"Command '{parsed_args.command}' not yet implemented")
             return 1
