@@ -440,6 +440,92 @@ def main(args: Optional[List[str]] = None) -> int:
                 print("Error: commit must be specified", file=sys.stderr)
                 return 1
             return cherry_pick_commit(repo, commit, verbose_flag)
+        elif parsed_args.command == 'drift':
+            from .commands.drift import detect_drift_command
+            # Parse drift-specific args
+            pair = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    pair = command_args[i]
+                    i += 1
+            return detect_drift_command(repo, pair, verbose_flag)
+        elif parsed_args.command == 'sync':
+            from .commands.sync import sync_worktrees
+            # Parse sync-specific args
+            pair = None
+            auto_commit = False
+            dry_run = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--auto-commit':
+                    auto_commit = True
+                    i += 1
+                elif command_args[i] == '--dry-run':
+                    dry_run = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    pair = command_args[i]
+                    i += 1
+            return sync_worktrees(repo, pair, auto_commit, dry_run, verbose_flag)
+        elif parsed_args.command == 'status':
+            from .commands.status import show_combined_status
+            # Parse status-specific args
+            short_flag = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--short':
+                    short_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    i += 1
+            return show_combined_status(repo, short_flag, verbose_flag)
+        elif parsed_args.command == 'diff':
+            from .commands.diff import show_worktree_diff
+            # Parse diff-specific args
+            name_only = False
+            patch_flag = False
+            paths = []
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--name-only':
+                    name_only = True
+                    i += 1
+                elif command_args[i] == '--patch':
+                    patch_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    paths.append(command_args[i])
+                    i += 1
+            return show_worktree_diff(repo, name_only, patch_flag, paths, verbose_flag)
         else:
             print(f"Command '{parsed_args.command}' not yet implemented")
             return 1
