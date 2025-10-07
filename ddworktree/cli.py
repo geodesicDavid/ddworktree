@@ -526,6 +526,107 @@ def main(args: Optional[List[str]] = None) -> int:
                     paths.append(command_args[i])
                     i += 1
             return show_worktree_diff(repo, name_only, patch_flag, paths, verbose_flag)
+        elif parsed_args.command == 'pair':
+            from .commands.pair import pair_worktrees
+            # Parse pair-specific args
+            treeA = None
+            treeB = None
+            force_flag = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--force':
+                    force_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    if treeA is None:
+                        treeA = command_args[i]
+                    elif treeB is None:
+                        treeB = command_args[i]
+                    else:
+                        print("Error: too many arguments", file=sys.stderr)
+                        return 1
+                    i += 1
+            if not treeA or not treeB:
+                print("Error: both treeA and treeB must be specified", file=sys.stderr)
+                return 1
+            return pair_worktrees(repo, treeA, treeB, force_flag, verbose_flag)
+        elif parsed_args.command == 'unpair':
+            from .commands.unpair import unpair_worktrees
+            # Parse unpair-specific args
+            path = None
+            keep_both = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--keep-both':
+                    keep_both = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    path = command_args[i]
+                    i += 1
+            if not path:
+                print("Error: path must be specified", file=sys.stderr)
+                return 1
+            return unpair_worktrees(repo, path, keep_both, verbose_flag)
+        elif parsed_args.command == 'doctor':
+            from .commands.doctor import doctor_command
+            # Parse doctor-specific args
+            fix_flag = False
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--fix':
+                    fix_flag = True
+                    i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    i += 1
+            return doctor_command(repo, fix_flag, verbose_flag)
+        elif parsed_args.command == 'restore':
+            from .commands.restore import restore_worktree
+            # Parse restore-specific args
+            tree = None
+            from_pair = None
+            verbose_flag = parsed_args.verbose
+            i = 0
+            while i < len(command_args):
+                if command_args[i] == '--from':
+                    if i + 1 < len(command_args):
+                        from_pair = command_args[i + 1]
+                        i += 2
+                    else:
+                        i += 1
+                elif command_args[i] in ['-v', '--verbose']:
+                    i += 1
+                elif command_args[i].startswith('-'):
+                    i += 1
+                    if i < len(command_args) and not command_args[i].startswith('-'):
+                        i += 1
+                else:
+                    tree = command_args[i]
+                    i += 1
+            if not tree:
+                print("Error: tree must be specified", file=sys.stderr)
+                return 1
+            return restore_worktree(repo, tree, from_pair, verbose_flag)
         else:
             print(f"Command '{parsed_args.command}' not yet implemented")
             return 1
